@@ -9,7 +9,7 @@ export const text = (name, object) => {
 
 
 export const template = {
-	GAME_MONITOR_URI,
+	"uri": GAME_MONITOR_URI,
 	"timeout": "5.0",
 	"buffer":  "0.1",
 	"throttle": "0.1",
@@ -47,12 +47,13 @@ export const template = {
 export const save = (filename) => {
 
     // Save configuration text file
-    const commonPath = `common/Counter-Strike Global Offensive/csgo/cfg`
+    const commonPath = `steamapps/common/Counter-Strike Global Offensive/csgo/cfg`
     const steamPath = getSteamPath()
     if (!steamPath) throw new Error('Steam path not found...')
 
-    if (fs.existsSync(commonPath)) {
-        const cfgPath = path.join(steamPath, commonPath, filename)
+	const basePath = path.join(steamPath, commonPath)
+    if (fs.existsSync(basePath)) {
+        const cfgPath = path.join(basePath, filename)
         fs.writeFileSync(cfgPath, text(filename, template))
         console.log(`Saved configuration file to ${cfgPath}`)
     } else {

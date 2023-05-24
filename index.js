@@ -30,7 +30,6 @@ app.use(express.static(__dirname));
 app.get('/status', (request, response) => response.json({clients: clients.length}));
 
 let clients = [];
-let facts = [];
 
 app.listen(EVENT_SERVER_PORT, () => {
   console.log(`Hypergamma service listening at ${EVENT_SERVER_URI}`)
@@ -44,7 +43,7 @@ function eventsHandler(request, response, next) {
     };
     response.writeHead(200, headers);
   
-    const data = `data: ${JSON.stringify({name: 'init', data: true})}\n\n`;
+    const data = `data: ${JSON.stringify({initSSEConnection: true})}\n\n`;
   
     response.write(data);
   
@@ -69,28 +68,9 @@ function eventsHandler(request, response, next) {
     clients.forEach(client => client.response.write(`data: ${JSON.stringify(newFact)}\n\n`))
   }
   
-//   app.post('/fact', addFact);
-
-// Setup CSGO Events
-function onEvent (name, data) {
-    console.log(`${name}: ${data}`)
-    sendEventsToAll( { name, data } )
-}
-
 let gsi = new CSGOGSI({
     port: GAME_MONITOR_PORT,
     // authToken: ["Q79v5tcxVQ8u", "Team2Token", "Team2SubToken"] // this must match the cfg auth token
 });
 
-gsi.on("all", function (data) {
-    console.log('EVENT', data)
-    fs.appendFileSync("./payload.txt", JSON.stringify(data, null, 2));
-});
-
-const events = ["gameMap", "gamePhase", "gameRounds", "gameCTscore", "gameTscore", "roundWins", "player", "roundPhase", "roundWinTeam", "bombState", "bombTimeStart", "bombExploded", "bombTimeLeft"]
-events.forEach(event => gsi.on(event, (v) => onEvent(event, v)));
-
-// Test sending events to clients
-setInterval(() => {
-    sendEventsToAll({name: 'test', data: true})
-}, 1000)
+gsi.on("all", sendEventsToAll);

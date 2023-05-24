@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>CSGO Server Test</title>
 </head>
 <body>
+    <h1 id="appname">No Game Specified</h1>
+    <p><b id="username">Unknown Username</b>  <sub id="steamid">-</sub></p>
+
     <ul></ul>
 </body>
 <script>
     var source = new EventSource('/events');
+
+    const appNameElement = document.getElementById('appname')
+    const usernameElement = document.getElementById('username')
+    const steamIDElement = document.getElementById('steamid')
 
     const ul = document.querySelector('ul')
 
@@ -20,8 +27,26 @@
 
     function handleSSEEvent(event) {
         const info = JSON.parse(event.data)
-        const { name, data } = info
-        addListItem(`<small>${name} - ${JSON.stringify(data)}</small>`)
+        const { provider, ...updates } = info
+
+        // Update the Provider Information
+        if (provider) {
+            const { name, steamid, appid, timestamp, version } = provider
+            appNameElement.innerText = name
+            steamIDElement.innerText = steamid
+        }
+        // const events = ["gameMap", "gamePhase", "gameRounds", "gameCTscore", "gameTscore", "roundWins", "player", "roundPhase", "roundWinTeam", "bombState", "bombTimeStart", "bombExploded", "bombTimeLeft"]
+
+        ul.insertAdjacentHTML('beforeend', `<h4>New Update</h4>`)
+
+        Object.entries(updates).forEach(([name, value]) => {
+
+            if (name === 'player') {
+                username.innerText = value.name
+            }
+
+            addListItem(`<small>${name} - ${JSON.stringify(value)}</small>`)
+        })
     }
 
     function onOpen(event) {

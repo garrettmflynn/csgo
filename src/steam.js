@@ -1,4 +1,4 @@
-
+import { enumerateValues, HKEY } from 'registry-js'
 import path from 'path';
 import fs from 'fs';
 import { homedir } from 'os';
@@ -34,6 +34,7 @@ export function getSteamPath() {
         return value;
     }
     catch (e) {
+        console.error('AHH', e)
         return null;
     }
 }

@@ -12,6 +12,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "node-csgo-gsi": "^0.0.5"
+    "node-csgo-gsi": "^0.0.5",
+    "registry-js": "^1.15.1"
   }
 }
