@@ -25,13 +25,32 @@
         ul.insertAdjacentHTML('beforeend', `<li>${html}</li>`)
     }
 
+    function mapUpdates(model, active, callback, path = []) {
+        const updates = []
+
+        for (let key in model) {
+            const previous = model[key]
+            const latest = active[key]
+            if (typeof previous === 'object') updates.push(...drill(previous, latest, callback, [...path, key]))
+            else {
+                const id = path.join('.')
+                callback(id, latest, previous)
+                updates.push({ id, latest, previous })
+            }
+        }
+
+        return updates
+    }
+
+    let providerInfo = {}
+
     function handleSSEEvent(event) {
         const info = JSON.parse(event.data)
-        const { provider, ...updates } = info
+        const { provider, previously, added, ...update } = info
 
         // Update the Provider Information
         if (provider) {
-            const { name, steamid, appid, timestamp, version } = provider
+            const { name, steamid, appid, timestamp, version } = providerInfo = provider
             appNameElement.innerText = name
             steamIDElement.innerText = steamid
         }
@@ -39,13 +58,30 @@
 
         ul.insertAdjacentHTML('beforeend', `<h4>New Update</h4>`)
 
-        Object.entries(updates).forEach(([name, value]) => {
+        Object.entries(update).forEach(([ name, values ]) => {
 
+            const previous = previously[name]
+            const newValues = added[name]
+
+            mapUpdates(previous, values, (path, latest, previous) => {
+                console.log('Updated Value', path, latest, previous)
+            }, [ name ])
+
+            mapUpdates(newValues, values, (path, latest, previous) => {
+                console.log('New Value', path, latest)
+            }, [ name ])
+
+            // Just grab the username from your player
             if (name === 'player') {
-                username.innerText = value.name
+                if (values.steamid === providerInfo.steamid) {
+                    console.log('Got my personal username')
+                    username.innerText = values.name
+                } 
+
+                else console.error("Got someone else's username", values)
             }
 
-            addListItem(`<small>${name} - ${JSON.stringify(value)}</small>`)
+            addListItem(`<small>${name} - ${JSON.stringify(values)}</small>`)
         })
     }
 
