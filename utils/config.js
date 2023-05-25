@@ -24,5 +24,5 @@ export const save = (port, filename) => {
     const config = JSON.parse(JSON.stringify(templateConfigFile))
     config.uri = `http://127.0.0.1:${port}`
     const cfgPath = path.join(installed.csgo, filename)
-    fs.writeFileSync(cfgPath, text(filename))
+    fs.writeFileSync(cfgPath, text(filename, config))
 }
