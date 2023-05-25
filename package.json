@@ -1,5 +1,5 @@
 {
-  "name": "csgo",
+  "name": "csgo-event-server",
   "version": "0.0.0",
   "type": "module",
   "main": "index.js",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "node-csgo-gsi": "^0.0.5",
     "registry-js": "^1.15.1"
   }
 }

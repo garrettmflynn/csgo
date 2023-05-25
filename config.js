@@ -1,15 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-import { getSteamPath } from "./steam.js"
-import { GAME_MONITOR_URI } from './globals.js'
-
-export const text = (name, object) => {
-    return `"${name}"\n${JSON.stringify(object, null, 2).replaceAll(": ", " ").replaceAll('",\n', '"\n').replaceAll('},\n', '}\n')}`
-}
-
-
-export const template = {
-	"uri": GAME_MONITOR_URI,
+export default {
+	// "uri": `http://127.0.0.1:3000`, // Will be added by the .env contents
 	"timeout": "5.0",
 	"buffer":  "0.1",
 	"throttle": "0.1",
@@ -42,21 +32,4 @@ export const template = {
 		// "bomb":                		"1", // location of the bomb, who's carrying it, dropped or not
 		// "player_position":     		"1", // forward direction, position for currently spectated player
 	}
-}
-
-export const save = (filename) => {
-
-    // Save configuration text file
-    const commonPath = `steamapps/common/Counter-Strike Global Offensive/csgo/cfg`
-    const steamPath = getSteamPath()
-    if (!steamPath) throw new Error('Steam path not found...')
-
-	const basePath = path.join(steamPath, commonPath)
-    if (fs.existsSync(basePath)) {
-        const cfgPath = path.join(basePath, filename)
-        fs.writeFileSync(cfgPath, text(filename, template))
-        console.log(`Saved configuration file to ${cfgPath}`)
-    } else {
-        throw new Error('CSGO not installed on this computer.')
-    }
 }

@@ -1,76 +1,69 @@
-import fs from 'fs';
 import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
+import dotenv from 'dotenv';
+dotenv.config(); // Load .env file
 
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
-import CSGOGSI from 'node-csgo-gsi';
-import * as config from './src/config.js';
-import { GAME_MONITOR_PORT, EVENT_SERVER_PORT, EVENT_SERVER_URI, filename } from './src/globals.js';
+import * as configUtils from './utils/config.js';
+import { getFreePorts } from './utils/network.js';
+
+// Set up ports for the server to listen on
+let [PORT] = await getFreePorts()
+if (process.env.PORT) PORT = process.env.PORT
+
+let appName = process.env.APP_NAME || process.env.npm_package_name
 
 // Try to create a configuration file on the host computer
-try {
-    config.save(filename) 
-} catch (e) {
-    console.error(e)
-}
+const hasCSGO = configUtils.installed.csgo
+if (hasCSGO) configUtils.save(PORT, `gamestate_integration_${appName}.cfg`)
 
-// Create Express Server
+// Setup the event server using Express
 const app = express();
-
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+// Serve the example HTML page
 app.use(express.static(__dirname));
 
-
-app.get('/status', (request, response) => response.json({clients: clients.length}));
-
+// Track all connected clients and send them game state updates
 let clients = [];
 
-app.listen(EVENT_SERVER_PORT, () => {
-  console.log(`Hypergamma service listening at ${EVENT_SERVER_URI}`)
-})
+function gameStateHander(req, res) {
+    clients.forEach(client => client.response.write(`data: ${JSON.stringify(req.body)}\n\n`))
+    res.sendStatus(200)
+}
 
-function eventsHandler(request, response, next) {
-    const headers = {
-      'Content-Type': 'text/event-stream',
-      'Connection': 'keep-alive',
-      'Cache-Control': 'no-cache'
-    };
-    response.writeHead(200, headers);
-  
-    const data = `data: ${JSON.stringify({initSSEConnection: true})}\n\n`;
-  
-    response.write(data);
-  
-    const clientId = Date.now();
-  
-    const newClient = {
-      id: clientId,
-      response
-    };
-  
-    clients.push(newClient);
-  
-    request.on('close', () => {
-      console.log(`${clientId} Connection closed`);
-      clients = clients.filter(client => client.id !== clientId);
+function eventsHandler(request, response) {
+
+    response.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache'
     });
-  }
-  
-  app.get('/events', eventsHandler);
 
-  function sendEventsToAll(newFact) {
-    clients.forEach(client => client.response.write(`data: ${JSON.stringify(newFact)}\n\n`))
-  }
-  
-let gsi = new CSGOGSI({
-    port: GAME_MONITOR_PORT,
-    // authToken: ["Q79v5tcxVQ8u", "Team2Token", "Team2SubToken"] // this must match the cfg auth token
-});
+    response.write(`data: ${JSON.stringify({ willEmitEvents: hasCSGO })}\n\n`);
 
-gsi.on("all", sendEventsToAll);
+    const clientId = Date.now();
+
+    const newClient = { id: clientId, response };
+
+    clients.push(newClient);
+
+    request.on('close', () => {
+        console.log(`${clientId} Connection closed`);
+        clients = clients.filter(client => client.id !== clientId);
+    });
+}
+
+app.get('/events', eventsHandler);
+app.post('*', gameStateHander);
+
+// Start the event server
+app.listen(PORT, () => {
+    console.log(`View real-time events from CS:GO at http://127.0.0.1:${PORT}`) // NOTE: This will always be local
+})
