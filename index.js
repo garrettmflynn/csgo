@@ -60,6 +60,10 @@ function eventsHandler(request, response) {
     });
 }
 
+app.get('/installed', (req, res) => {
+    res.send(configUtils.installed)
+});
+
 app.get('/events', eventsHandler);
 app.post('*', gameStateHander);
 

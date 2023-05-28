@@ -10,6 +10,15 @@
     <h1 id="provider-name">Start Playing CS:GO</h1>
     <p><b id="player-name">No User Detected</b>  <sub id="provider-steamid">-</sub></p>
 
+    <div>
+        <div id="steam">
+            <label>Steam:</label><button id="steamButton">Install Steam</button>
+        </div>
+        <div id="csgo">
+            <label>CS:GO:</label><button id="csgoButton">Install CS:GO</button>
+        </div>
+    </div>
+
     <p><b>Activity:</b> <span id="player-activity"></span></p>
 
     <div id="session-information">
@@ -48,6 +57,33 @@
     </div>
 </body>
 <script>
+
+    const appid = 730
+    const launchCSGOUrl = `steam://launch/${appid}`
+
+    const csgoButton = document.getElementById('csgoButton')
+    const steamButton = document.getElementById('steamButton')
+
+   fetch('/installed').then(res => res.json(res)).then(installed => {
+        if (installed.steam) {
+            steamButton.innerText = 'Open Steam'
+            steamButton.onclick = () => window.open(`steam://open/main`)
+
+            if (installed.csgo) {
+                steamButton.innerText = 'Launch CS:GO'
+                csgoButton.onclick = () => window.open(`steam://launch/${appid}`)
+            } else {
+                csgoButton.onclick = () => window.open(`steam://install/${appid}`)
+            }
+            
+        } else {
+            steamButton.onclick = () => window.open(`https://store.steampowered.com/about/`)
+        }
+    })
+
+
+
+
     var source = new EventSource('/events');
 
     const ul = document.querySelector('ul')
